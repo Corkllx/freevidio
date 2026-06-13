@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频解析 - 免费观看VIP视频</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 40px;
+        }
+
+        .input-group {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #videoUrl {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            background: rgba(255,255,255,0.9);
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        #videoUrl:focus {
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+        }
+
+        #videoUrl::placeholder {
+            color: #999;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: #fff;
+            color: #667eea;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+        }
+
+        .platforms {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .platform-tag {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .platform-tag::before {
+            content: "✓";
+            font-weight: bold;
+        }
+
+        .tips {
+            margin-top: 30px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+
+        .tips strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        /* ===== 播放器区域 ===== */
+        .player-container {
+            display: none;
+            margin-top: 30px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        .player-header {
+            background: rgba(0,0,0,0.2);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .player-title {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .player-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .api-selector {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .api-selector option {
+            background: #333;
+            color: #fff;
+        }
+
+        /* 播放器包装器 - 相对定位用于放置清晰度按钮 */
+        .player-wrapper {
+            position: relative;
+            width: 100%;
+            background: #000;
+        }
+
+        iframe {
+            width: 100%;
+            height: 500px;
+            border: none;
+            background: #000;
+            display: block;
+        }
+
+        /* ===== 清晰度控制面板 ===== */
+        .quality-control {
+            position: absolute;
+            bottom: 60px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .quality-btn {
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+
+        .quality-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+            border-color: rgba(255,255,255,0.5);
+            transform: scale(1.05);
+        }
+
+        .quality-btn .quality-icon {
+            font-size: 1.1rem;
+        }
+
+        .quality-menu {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 8px;
+            min-width: 140px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+            animation: menuPop 0.2s ease;
+        }
+
+        .quality-menu.show {
+            display: flex;
+        }
+
+        @keyframes menuPop {
+            from { opacity: 0; transform: translateY(10px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .quality-option {
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .quality-option:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        .quality-option.active {
+            background: rgba(102, 126, 234, 0.4);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .quality-option .check-mark {
+            opacity: 0;
+            font-size: 0.9rem;
+        }
+
+        .quality-option.active .check-mark {
+            opacity: 1;
+        }
+
+        .quality-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .quality-badge {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        .badge-hd {
+            background: #10b981;
+            color: #fff;
+        }
+
+        .badge-sd {
+            background: #f59e0b;
+            color: #fff;
+        }
+
+        .badge-ld {
+            background: #6b7280;
+            color: #fff;
+        }
+
+        /* 提示文字 */
+        .quality-hint {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.6);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 20px;
+            font-size: 1rem;
+        }
+
+        .loading::after {
+            content: "";
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            margin-left: 10px;
+            animation: spin 1s linear infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 提示消息样式 */
+        .toast {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 280px;
+            justify-content: center;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast-success {
+            background: #10b981;
+            color: #fff;
+        }
+
+        .toast-error {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .toast-info {
+            background: #3b82f6;
+            color: #fff;
+        }
+
+        .toast-icon {
+            font-size: 1.3rem;
+        }
+
+        /* 解析状态提示区域 */
+        .status-area {
+            margin-top: 20px;
+            min-height: 50px;
+        }
+
+        .status-msg {
+            display: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .status-msg.success {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #6ee7b7;
+        }
+
+        .status-msg.error {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+            flex-wrap: wrap;
+        }
+
+        .status-msg .retry-btn {
+            margin-left: 10px;
+            padding: 6px 14px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .status-msg .retry-btn:hover {
+            background: rgba(255,255,255,0.35);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 常见问题区域 */
+        .faq-section {
+            margin-top: 30px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: left;
+        }
+
+        .faq-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .faq-item {
+            margin-bottom: 12px;
+            padding: 10px 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+
+        .faq-q {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #fde047;
+        }
+
+        .faq-a {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        .footer {
+            margin-top: 40px;
+            font-size: 0.8rem;
+            opacity: 0.6;
+        }
+
+        @media (max-width: 600px) {
+            .input-wrapper {
+                flex-direction: column;
+            }
+            .logo {
+                font-size: 1.8rem;
+            }
+            iframe {
+                height: 250px;
+            }
+            .toast {
+                min-width: 90%;
+                padding: 12px 20px;
+                font-size: 0.9rem;
+            }
+            .player-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .player-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .quality-control {
+                bottom: 50px;
+                right: 10px;
+            }
+            .quality-btn {
+                padding: 8px 14px;
+                font-size: 0.8rem;
+            }
+            .quality-menu {
+                min-width: 120px;
+            }
+            .quality-option {
+                padding: 8px 12px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 全局提示消息 -->
+    <div id="toast" class="toast">
+        <span class="toast-icon" id="toastIcon">✓</span>
+        <span id="toastText">提示消息</span>
+    </div>
+
+    <div class="container">
+        <div class="logo">🎬 视频解析</div>
+        <div class="subtitle">支持主流视频平台VIP视频免费解析观看</div>
+
+        <div class="input-group">
+            <div class="input-wrapper">
+                <input type="text" id="videoUrl" placeholder="粘贴视频链接地址，如：https://v.qq.com/x/cover/..." autocomplete="off">
+                <button class="btn btn-primary" onclick="parseVideo()">立即解析</button>
+            </div>
+            <button class="btn btn-secondary" onclick="clearInput()">清空</button>
+
+            <!-- 解析状态提示区域 -->
+            <div class="status-area" id="statusArea">
+                <div class="status-msg success" id="successMsg">
+                    <span>🎉</span>
+                    <span>解析成功！视频已加载，下方即可观看</span>
+                </div>
+                <div class="status-msg error" id="errorMsg">
+                    <span>⚠️</span>
+                    <span id="errorText">解析失败，该视频暂不支持或链接有误</span>
+                    <button class="retry-btn" onclick="retryParse()">换接口重试</button>
+                </div>
+            </div>
+
+            <div class="platforms">
+                <span class="platform-tag">腾讯视频</span>
+                <span class="platform-tag">爱奇艺</span>
+                <span class="platform-tag">优酷</span>
+                <span class="platform-tag">芒果TV</span>
+                <span class="platform-tag">哔哩哔哩</span>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">正在解析中</div>
+
+        <div class="player-container" id="playerContainer">
+            <div class="player-header">
+                <span class="player-title">📺 解析结果</span>
+                <div class="player-actions">
+                    <select class="api-selector" id="apiSelector" onchange="switchApi()">
+                        <option value="0">接口 1</option>
+                        <option value="1">接口 2</option>
+                        <option value="2">接口 3</option>
+                        <option value="3">接口 4</option>
+                        <option value="4">接口 5</option>
+                        <option value="5">接口 6</option>
+                        <option value="6">接口 7</option>
+                        <option value="7">接口 8</option>
+                        <option value="8">接口 9</option>
+                        <option value="9">接口 10</option>
+                    </select>
+                    <button class="btn btn-secondary btn-small" onclick="retryParse()">换接口</button>
+                    <button class="btn btn-secondary btn-small" onclick="closePlayer()">关闭</button>
+                </div>
+            </div>
+
+            <!-- 播放器包装器 -->
+            <div class="player-wrapper" id="playerWrapper">
+                <iframe id="playerFrame" allowfullscreen></iframe>
+
+                <!-- 清晰度控制面板 -->
+                <div class="quality-control" id="qualityControl">
+                    <div class="quality-menu" id="qualityMenu">
+                        <div class="quality-option active" data-quality="auto" onclick="changeQuality('auto')">
+                            <span class="quality-label">
+                                <span>🎯</span>
+                                <span>自动</span>
+                            </span>
+                            <span class="check-mark">✓</span>
+                        </div>
+                        <div class="quality-option" data-quality="1080" onclick="changeQuality('1080')">
+                            <span class="quality-label">
+                                <span>🎬</span>
+                                <span>1080P</span>
+                                <span class="quality-badge badge-hd">HD</span>
+                            </span>
+                            <span class="check-mark">✓</span>
+                        </div>
+                        <div class="quality-option" data-quality="720" onclick="changeQuality('720')">
+                            <span class="quality-label">
+                                <span>📺</span>
+                                <span>720P</span>
+                                <span class="quality-badge badge-sd">SD</span>
+                            </span>
+                            <span class="check-mark">✓</span>
+                        </div>
+                        <div class="quality-option" data-quality="480" onclick="changeQuality('480')">
+                            <span class="quality-label">
+                                <span>📱</span>
+                                <span>480P</span>
+                                <span class="quality-badge badge-ld">LD</span>
+                            </span>
+                            <span class="check-mark">✓</span>
+                        </div>
+                    </div>
+                    <button class="quality-btn" id="qualityBtn" onclick="toggleQualityMenu()">
+                        <span class="quality-icon">⚙️</span>
+                        <span id="currentQuality">清晰度</span>
+                    </button>
+                </div>
+
+                <div class="quality-hint">部分接口可能不支持清晰度切换</div>
+            </div>
+        </div>
+
+        <div class="tips">
+            <strong>💡 使用说明</strong>
+            1. 打开腾讯、爱奇艺、优酷等平台，找到想看的VIP视频<br>
+            2. 复制视频页面地址（浏览器地址栏的URL）<br>
+            3. 粘贴到上方输入框，点击"立即解析"即可观看<br>
+            4. 如果无法播放，尝试切换不同的解析接口或清晰度
+        </div>
+
+        <!-- 常见问题 -->
+        <div class="faq-section">
+            <div class="faq-title">❓ 常见问题排查</div>
+            <div class="faq-item">
+                <div class="faq-q">视频解析后黑屏/无法播放？</div>
+                <div class="faq-a">原因：① 解析接口失效被封 ② 视频平台升级防盗链 ③ 该视频不支持解析。解决方法：点击"换接口"按钮尝试其他线路，或切换清晰度为"自动"。</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q">清晰度切换没反应？</div>
+                <div class="faq-a">第三方解析接口大多不支持清晰度参数控制，它们通常只返回一种清晰度。如果切换无效，说明当前接口不支持此功能，建议换接口尝试。</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q">为什么有时候能看，有时候不能看？</div>
+                <div class="faq-a">第三方解析接口是公益服务，服务器负载高或被封时就会失效。建议多收藏几个解析网站备用，或尝试在不同时间段访问。</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            仅供学习交流使用，请支持正版 · 本站不存储任何视频内容
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 2026年最新视频解析接口列表
+        // 这些接口来自网友分享，可能随时失效，建议定期更新
+        // ==========================================
+        const parseApis = [
+            'https://bfq.937auth.vip?url=',           // 937播放器（支持弹幕）
+            'https://bd.jx.cn/?url=',                 // 冰豆解析
+            'https://super.playr.top/?url=',         // Ai超级播放器
+            'https://json.fongmi.cc/web?url=',       // fongmi（弹幕多）
+            'https://www.huaqi.live/?url=',          // 花旗解析
+            'https://jiexi.789jiexi.com/?url=',      // 789解析
+            'https://jx.2s0.cn/player/?url=',        // 极速解析
+            'https://vip.52jiexi.top/?url=',         // 52解析
+            'https://api.78sy.cn/?url=',             // 78sy解析
+            'https://www.kpezp.cn/jlexi.php?url='   // kpezp解析
+        ];
+
+        // 带清晰度参数的接口格式（部分接口支持）
+        const qualityParams = {
+            'auto': '',
+            '1080': '&quality=1080p',
+            '720': '&quality=720p',
+            '480': '&quality=480p'
+        };
+
+        let currentApiIndex = 0;
+        let lastParsedUrl = '';
+        let retryCount = 0;
+        let currentQuality = 'auto';
+        let qualityMenuOpen = false;
+
+        // 显示全局提示
+        function showToast(text, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastText = document.getElementById('toastText');
+
+            toastText.textContent = text;
+            toast.className = 'toast show toast-' + type;
+
+            if (type === 'success') {
+                toastIcon.textContent = '✓';
+            } else if (type === 'error') {
+                toastIcon.textContent = '✕';
+            } else {
+                toastIcon.textContent = 'ℹ';
+            }
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // 显示解析成功状态
+        function showSuccess() {
+            document.getElementById('successMsg').style.display = 'flex';
+            document.getElementById('errorMsg').style.display = 'none';
+            showToast('🎉 解析成功！视频加载完成', 'success');
+        }
+
+        // 显示解析失败状态
+        function showError(msg) {
+            document.getElementById('successMsg').style.display = 'none';
+            document.getElementById('errorMsg').style.display = 'flex';
+            document.getElementById('errorText').textContent = msg || '解析失败，该视频暂不支持或链接有误';
+            showToast('⚠️ 解析失败，请尝试切换接口', 'error');
+        }
+
+        // 隐藏状态提示
+        function hideStatus() {
+            document.getElementById('successMsg').style.display = 'none';
+            document.getElementById('errorMsg').style.display = 'none';
+        }
+
+        // 切换清晰度菜单
+        function toggleQualityMenu() {
+            const menu = document.getElementById('qualityMenu');
+            qualityMenuOpen = !qualityMenuOpen;
+            if (qualityMenuOpen) {
+                menu.classList.add('show');
+            } else {
+                menu.classList.remove('show');
+            }
+        }
+
+        // 点击其他地方关闭菜单
+        document.addEventListener('click', function(e) {
+            const control = document.getElementById('qualityControl');
+            const menu = document.getElementById('qualityMenu');
+            if (!control.contains(e.target) && qualityMenuOpen) {
+                menu.classList.remove('show');
+                qualityMenuOpen = false;
+            }
+        });
+
+        // 切换清晰度
+        function changeQuality(quality) {
+            currentQuality = quality;
+
+            // 更新菜单选中状态
+            document.querySelectorAll('.quality-option').forEach(opt => {
+                opt.classList.remove('active');
+                if (opt.dataset.quality === quality) {
+                    opt.classList.add('active');
+                }
+            });
+
+            // 更新按钮文字
+            const qualityNames = {
+                'auto': '自动',
+                '1080': '1080P',
+                '720': '720P',
+                '480': '480P'
+            };
+            document.getElementById('currentQuality').textContent = qualityNames[quality];
+
+            // 关闭菜单
+            document.getElementById('qualityMenu').classList.remove('show');
+            qualityMenuOpen = false;
+
+            // 如果已有视频在播放，重新加载
+            if (lastParsedUrl) {
+                showToast('🔄 正在切换至 ' + qualityNames[quality] + '...', 'info');
+                setTimeout(() => {
+                    reloadWithQuality();
+                }, 300);
+            } else {
+                showToast('📌 已选择 ' + qualityNames[quality] + '，请粘贴视频链接', 'info');
+            }
+        }
+
+        // 使用当前清晰度重新加载视频
+        function reloadWithQuality() {
+            if (!lastParsedUrl) return;
+
+            const baseApi = parseApis[currentApiIndex];
+            const qualityParam = qualityParams[currentQuality] || '';
+            const apiUrl = baseApi + encodeURIComponent(lastParsedUrl) + qualityParam;
+
+            document.getElementById('playerFrame').src = apiUrl;
+
+            showToast('✓ 已切换清晰度，视频重新加载中', 'success');
+        }
+
+        function parseVideo() {
+            const url = document.getElementById('videoUrl').value.trim();
+
+            if (!url) {
+                showToast('请输入视频链接地址', 'error');
+                return;
+            }
+
+            // 验证链接格式
+            const validDomains = ['v.qq.com', 'iqiyi.com', 'youku.com', 'mgtv.com', 'bilibili.com', 'le.com', 'pptv.com'];
+            const isValid = validDomains.some(domain => url.includes(domain));
+
+            if (!isValid) {
+                showToast('请输入正确的视频平台链接', 'error');
+                return;
+            }
+
+            lastParsedUrl = url;
+            retryCount = 0;
+            hideStatus();
+
+            // 显示加载
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('playerContainer').style.display = 'none';
+
+            showToast('🔍 正在使用接口 ' + (currentApiIndex + 1) + ' 解析视频...', 'info');
+
+            // 模拟解析延迟
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+
+                // 构建带清晰度参数的URL
+                const baseApi = parseApis[currentApiIndex];
+                const qualityParam = qualityParams[currentQuality] || '';
+                const apiUrl = baseApi + encodeURIComponent(url) + qualityParam;
+
+                document.getElementById('playerFrame').src = apiUrl;
+                document.getElementById('playerContainer').style.display = 'block';
+
+                // 更新下拉框选中状态
+                document.getElementById('apiSelector').value = currentApiIndex;
+
+                // 显示成功提示
+                showSuccess();
+
+                // 滚动到播放器
+                document.getElementById('playerContainer').scrollIntoView({ behavior: 'smooth' });
+
+                // 5秒后检测iframe是否加载成功
+                setTimeout(() => {
+                    checkIframeLoad();
+                }, 5000);
+
+            }, 1200);
+        }
+
+        // 检测iframe加载状态
+        function checkIframeLoad() {
+            const iframe = document.getElementById('playerFrame');
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                if (iframeDoc && iframeDoc.body) {
+                    const bodyText = iframeDoc.body.innerText || '';
+                    const bodyHtml = iframeDoc.body.innerHTML || '';
+
+                    const errorKeywords = ['error', '404', '失效', '无法', '禁止', 'fail', 'not found', '维护'];
+                    const hasError = errorKeywords.some(keyword => 
+                        bodyText.toLowerCase().includes(keyword) || 
+                        bodyHtml.toLowerCase().includes(keyword)
+                    );
+
+                    if (hasError || bodyText.length < 10) {
+                        showError('接口 ' + (currentApiIndex + 1) + ' 返回异常，建议切换其他接口');
+                    }
+                }
+            } catch (e) {
+                console.log('跨域检测跳过');
+            }
+        }
+
+        // 切换接口
+        function switchApi() {
+            const selector = document.getElementById('apiSelector');
+            currentApiIndex = parseInt(selector.value);
+
+            if (lastParsedUrl) {
+                showToast('🔄 已切换至接口 ' + (currentApiIndex + 1) + '，正在重新解析...', 'info');
+                document.getElementById('videoUrl').value = lastParsedUrl;
+                setTimeout(() => parseVideo(), 500);
+            } else {
+                showToast('📌 已选择接口 ' + (currentApiIndex + 1) + '，请粘贴视频链接', 'info');
+            }
+        }
+
+        // 切换接口重试
+        function retryParse() {
+            retryCount++;
+
+            if (retryCount >= parseApis.length) {
+                showError('所有接口均无法解析该视频，可能该视频暂不支持解析');
+                retryCount = 0;
+                return;
+            }
+
+            currentApiIndex = (currentApiIndex + 1) % parseApis.length;
+            document.getElementById('apiSelector').value = currentApiIndex;
+
+            showToast('🔄 正在切换至备用接口 ' + (currentApiIndex + 1) + '/' + parseApis.length, 'info');
+
+            if (lastParsedUrl) {
+                document.getElementById('videoUrl').value = lastParsedUrl;
+                setTimeout(() => parseVideo(), 500);
+            }
+        }
+
+        function clearInput() {
+            document.getElementById('videoUrl').value = '';
+            document.getElementById('playerContainer').style.display = 'none';
+            document.getElementById('loading').style.display = 'none';
+            hideStatus();
+            lastParsedUrl = '';
+            retryCount = 0;
+            showToast('🧹 已清空输入', 'info');
+        }
+
+        function closePlayer() {
+            document.getElementById('playerContainer').style.display = 'none';
+            document.getElementById('playerFrame').src = '';
+            hideStatus();
+        }
+
+        // 回车键解析
+        document.getElementById('videoUrl').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                parseVideo();
+            }
+        });
+
+        // 监听粘贴事件
+        document.getElementById('videoUrl').addEventListener('paste', function(e) {
+            setTimeout(() => {
+                const url = e.target.value.trim();
+                if (url) {
+                    showToast('📋 链接已粘贴，按回车或点击解析', 'info');
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>
